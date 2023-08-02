@@ -11,6 +11,7 @@ async function bootstrap() {
     .setTitle('Livekit NestJS API')
     .setDescription('Livekit NestJS API description')
     .setVersion('1.0')
+    .addBearerAuth()
     .addTag('livekit')
     .build();
   const document = SwaggerModule.createDocument(app, config);
