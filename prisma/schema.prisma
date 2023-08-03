@@ -53,6 +53,7 @@ model Message {
 }
 
 model FriendRequest {
+  id        String   @id @default(uuid())
   fromId    String
   toId      String
   createdAt DateTime @default(now())
@@ -64,6 +65,7 @@ model FriendRequest {
 }
 
 model Friend {
+  id        String   @id @default(uuid())
   aId       String
   bId       String
   createdAt DateTime @default(now())
