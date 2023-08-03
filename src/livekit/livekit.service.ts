@@ -1,9 +1,19 @@
-import { AccessToken, Room, RoomServiceClient } from 'livekit-server-sdk';
+import {
+  AccessToken,
+  ParticipantPermission,
+  Room,
+  RoomServiceClient,
+} from 'livekit-server-sdk';
 import { Injectable } from '@nestjs/common';
-import { CreateRoomDto } from './dto/create-room.dto';
+import { CreateVoiceRoomDto } from './dto/create-voice-room.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class LivekitService {
-  async createAndJoinRoom(createRoomDto: CreateRoomDto): Promise<AccessToken> {
+  constructor(private readonly prisma: PrismaService) {}
+  // //start a room
+  async createAndJoinRoom(
+    createRoomDto: CreateVoiceRoomDto,
+  ): Promise<AccessToken> {
     const roomName = createRoomDto.name;
     const participantName = createRoomDto.participantName;
     const token = new AccessToken(
@@ -31,10 +41,10 @@ export class LivekitService {
     );
     // create a new room
     const opts = {
-      name: 'myroom',
+      name: 'ls',
       // timeout in seconds
       emptyTimeout: 10 * 60,
-      maxParticipants: 20,
+      maxParticipants: 10,
     };
     svc.createRoom(opts).then((room: Room) => {
       console.log('room created', room);
@@ -64,6 +74,34 @@ export class LivekitService {
     const y = await svc.listParticipants('myroom');
     console.log(y);
   }
+
+  async modfun() {
+    const livekitHost = 'http://localhost:7880/';
+    const svc = new RoomServiceClient(
+      livekitHost,
+      process.env.LIVEKIT_API,
+      process.env.LIVEKIT_SECRET,
+    );
+
+    const permission: ParticipantPermission = {
+      canPublish: true,
+      canSubscribe: true,
+      canPublishData: true,
+      canUpdateMetadata: true,
+      canPublishSources: [],
+      hidden: false,
+      recorder: false,
+    };
+  }
+
+  // async getFeed() {
+  //   const livekitHost = 'http://localhost:7880/';
+  //    const svc = new RoomServiceClient(
+  //     livekitHost,
+  //     process.env.LIVEKIT_API,
+  //     process.env.LIVEKIT_SECRET,
+  //   );
+  // }
 
   // //allowing another member to to speak
   // async allowMemberToSpeak(

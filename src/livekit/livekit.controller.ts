@@ -1,20 +1,31 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Controller, Post, Body, Get } from '@nestjs/common';
-import { CreateRoomDto } from './dto/create-room.dto';
+import { CreateVoiceRoomDto } from './dto/create-voice-room.dto';
 import { LivekitService } from './livekit.service';
 import { Response } from 'src/interface/response';
 
 @Controller('livekit')
 export class LivekitController {
   constructor(private readonly livekitService: LivekitService) {}
+
+  // @Get('/feed')
+  // @ApiProperty()
+  // async getFeed(): Promise<Response> {
+  //   const feed = await this.livekitService.getFeed();
+  //   return {
+  //     data: feed,
+  //   };
+  // }
+
   @Post('join')
-  @ApiProperty({ type: [CreateRoomDto] })
+  @ApiProperty({ type: [CreateVoiceRoomDto] })
   async joinRoomAndCreate(
-    @Body() createRoomDto: CreateRoomDto,
+    @Body() createRoomDto: CreateVoiceRoomDto,
   ): Promise<Response> {
     const token = await this.livekitService.createAndJoinRoom(createRoomDto);
     return {
       data: token.toJwt(),
+      status: 'success',
     };
   }
 
@@ -29,6 +40,7 @@ export class LivekitController {
     const rooms = await this.livekitService.getListRooms();
     return {
       data: rooms,
+      status: 'success',
     };
   }
 
