@@ -38,6 +38,7 @@ export class JwtService {
 
   async verifyToken(token: string, isWs = false): Promise<User | null> {
     console.log('verifyToken');
+    console.log(token);
     try {
       const payload = jwt.verify(token, APP_CONFIG.jwtSecret) as any;
       return await this.jwtStrategy.validate(payload);
