@@ -1,17 +1,98 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id    Int    @id @default(autoincrement())
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+
+  friendsA           Friend[]        @relation("friend_a")
+  friendsB           Friend[]        @relation("friend_b")
+  friendRequestsFrom FriendRequest[] @relation("friendrequest_from")
+  friendRequestsTo   FriendRequest[] @relation("friendrequest_to")
+  status             StatusType?     @default(OFFLINE)
+  Message            Message[]
+  CreatedRoom        Room[]          @relation("owner")
+  Room               Room[]          @relation("RoomUser")
+  VoiceRoom          VoiceRoom[]     @relation("VoiceRoomUser")
+  createdBy          VoiceRoom[]     @relation("owner")
+}
+
+model Room {
+  id    String  @id @default(uuid())
   name  String
-  email String @unique
+  about String?
+
+  createdBy   User?     @relation("owner", fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt()
+  users       User[]    @relation("RoomUser")
+  messages    Message[]
+}
+
+model Message {
+  id       String  @id @default(uuid())
+  text     String
+  imageUrl String?
+
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId    String
+}
+
+model FriendRequest {
+  fromId    String
+  toId      String
+  createdAt DateTime @default(now())
+  from      User     @relation("friendrequest_from", fields: [fromId], references: [id], onDelete: Cascade)
+  to        User     @relation("friendrequest_to", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@unique([fromId, toId])
+  @@index([toId])
+}
+
+model Friend {
+  aId       String
+  bId       String
+  createdAt DateTime @default(now())
+  a         User     @relation("friend_a", fields: [aId], references: [id], onDelete: Cascade)
+  b         User     @relation("friend_b", fields: [bId], references: [id], onDelete: Cascade)
+
+  @@unique([aId, bId])
+  @@index([bId])
+}
+
+model VoiceRoom {
+  id          String    @id @default(uuid())
+  name        String
+  about       String?
+  liveAt      DateTime?
+  roomType    RoomType? @default(PUBLIC)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt()
+  createdBy   User?     @relation("owner", fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String?
+  users       User[]    @relation("VoiceRoomUser")
+}
+
+enum StatusType {
+  ONLINE
+  OFFLINE
+}
+
+enum RoomType {
+  PUBLIC
+  PRIVATE
 }
