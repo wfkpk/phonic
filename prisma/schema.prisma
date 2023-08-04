@@ -23,8 +23,6 @@ model User {
   Message            Message[]
   createdChatRoom    Chat[]          @relation("owner")
   chat               Chat[]          @relation("RoomUser")
-  voiceRoom          VoiceRoom[]     @relation("VoiceRoomUser")
-  createdBy          VoiceRoom[]     @relation("owner")
   MessageStatus      MessageStatus[]
 }
 
@@ -33,13 +31,14 @@ model Chat {
   name  String
   about String?
 
-  createdBy   User?     @relation("owner", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy   User?      @relation("owner", fields: [createdById], references: [id], onDelete: Cascade)
   createdById String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt()
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt()
   keyPair     KeyPair?
-  users       User[]    @relation("RoomUser")
+  users       User[]     @relation("RoomUser")
   messages    Message[]
+  voiceRoom   VoiceRoom?
 }
 
 model Message {
@@ -100,16 +99,11 @@ model Friend {
 }
 
 model VoiceRoom {
-  id          String    @id @default(uuid())
-  name        String
-  about       String?
-  liveAt      DateTime?
-  roomType    RoomType? @default(PUBLIC)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt()
-  createdBy   User?     @relation("owner", fields: [createdById], references: [id], onDelete: Cascade)
-  createdById String?
-  users       User[]    @relation("VoiceRoomUser")
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  chatId    String   @unique
 }
 
 enum StatusType {
