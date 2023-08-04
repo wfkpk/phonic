@@ -92,6 +92,12 @@ export class RoomService {
       },
     });
     await this.encryptService.generateKeyPair(newRoom.id);
+    await this.prismaService.voiceRoom.create({
+      data: {
+        name: newRoom.name,
+        chatId: newRoom.id,
+      },
+    });
     return newRoom;
   }
 

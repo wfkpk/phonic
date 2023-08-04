@@ -9,7 +9,7 @@ import {
   Delete,
 } from '@nestjs/common';
 import { RoomService } from './room.service';
-import { JwtAuthGuard } from 'src/guard/auth.guard';
+import { JwtAuthGuard, ModAuthGuard } from 'src/guard/auth.guard';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { JwtService } from 'src/jwt/jwt.service';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -82,6 +82,7 @@ export class RoomController {
   }
 
   @Delete(':id/delete')
+  @UseGuards(ModAuthGuard)
   async deleteRoom(
     @Param(':id') roomId: string,
     @Headers('Authorization') token: string,
