@@ -1,3 +1,4 @@
+import { EncryptService } from 'src/encryption/encrypt.service';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -5,16 +6,19 @@ import { CreateRoomDto } from './dto/create-room.dto';
 
 @Injectable()
 export class RoomService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly encryptService: EncryptService,
+  ) {}
 
-  async getRoom(roomId: string, userId: string) {
+  async getRoom(chatId: string, userId: string) {
     //check user is part of that room
     const user = await this.prismaService.user.findFirst({
       where: {
         id: userId,
-        Room: {
+        chat: {
           some: {
-            id: roomId,
+            id: chatId,
           },
         },
       },
@@ -23,9 +27,9 @@ export class RoomService {
       throw new Error('You are not part of this room');
     }
 
-    const room = await this.prismaService.room.findUnique({
+    const room = await this.prismaService.chat.findUnique({
       where: {
-        id: roomId,
+        id: chatId,
       },
       select: {
         id: true,
@@ -58,11 +62,20 @@ export class RoomService {
         },
       },
     });
+    const encryptedMessages = room.messages.map((message) => message.text);
+    const decryptedMessages = await this.encryptService.decryptListOfMessages(
+      chatId,
+      encryptedMessages,
+    );
+    decryptedMessages.forEach((decryptedMessage, index) => {
+      room.messages[index].text = decryptedMessage;
+    });
+    console.log(room);
     return room;
   }
   async createRoom(createRoomDto: CreateRoomDto, userId: string): Promise<any> {
     const { name, about } = createRoomDto;
-    const newRoom = await this.prismaService.room.create({
+    const newRoom = await this.prismaService.chat.create({
       data: {
         name,
         about,
@@ -78,19 +91,31 @@ export class RoomService {
         },
       },
     });
+    await this.encryptService.generateKeyPair(newRoom.id);
     return newRoom;
   }
 
   async createMessage(
     userId: string,
-    roomId: string,
+    chatId: string,
     createMessageDto: CreateMessageDto,
   ) {
-    const { message } = createMessageDto;
+    const { text } = createMessageDto;
+    console.log(text);
+    const encryptedMessage = await this.encryptService.encryptMessage(
+      chatId,
+      text,
+    );
+    console.log(encryptedMessage);
+    // const encryptedMessage = await this.encryptService.encryptMessage(
+    //   chatId,
+    //   text,
+    // );
+
     const newMessage = await this.prismaService.message.create({
       data: {
-        text: message,
-        roomId,
+        text: encryptedMessage,
+        chatId,
         userId,
       },
     });
@@ -103,14 +128,14 @@ export class RoomService {
         id: userId,
       },
       select: {
-        Room: {
+        chat: {
           select: {
             id: true,
             name: true,
             about: true,
           },
         },
-        CreatedRoom: {
+        createdChatRoom: {
           select: {
             id: true,
             name: true,
@@ -124,10 +149,10 @@ export class RoomService {
     return rooms;
   }
 
-  async deleteRoom(userId: string, roomId: string): Promise<any> {
-    const room = await this.prismaService.room.findUnique({
+  async deleteRoom(userId: string, chatId: string): Promise<any> {
+    const room = await this.prismaService.chat.findUnique({
       where: {
-        id: roomId,
+        id: chatId,
         createdById: userId,
       },
     });
@@ -138,7 +163,7 @@ export class RoomService {
   }
 
   async deleteMessage(
-    roomId: string,
+    chatId: string,
     userId: string,
     messageId: string,
   ): Promise<any> {
@@ -146,7 +171,7 @@ export class RoomService {
       where: {
         id: messageId,
         userId: userId,
-        roomId: roomId,
+        chatId: chatId,
       },
     });
   }

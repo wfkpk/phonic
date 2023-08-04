@@ -21,13 +21,14 @@ model User {
   friendRequestsTo   FriendRequest[] @relation("friendrequest_to")
   status             StatusType?     @default(OFFLINE)
   Message            Message[]
-  CreatedRoom        Room[]          @relation("owner")
-  Room               Room[]          @relation("RoomUser")
-  VoiceRoom          VoiceRoom[]     @relation("VoiceRoomUser")
+  createdChatRoom    Chat[]          @relation("owner")
+  chat               Chat[]          @relation("RoomUser")
+  voiceRoom          VoiceRoom[]     @relation("VoiceRoomUser")
   createdBy          VoiceRoom[]     @relation("owner")
+  MessageStatus      MessageStatus[]
 }
 
-model Room {
+model Chat {
   id    String  @id @default(uuid())
   name  String
   about String?
@@ -36,6 +37,7 @@ model Room {
   createdById String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt()
+  keyPair     KeyPair?
   users       User[]    @relation("RoomUser")
   messages    Message[]
 }
@@ -45,11 +47,32 @@ model Message {
   text     String
   imageUrl String?
 
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime        @default(now())
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  chat          Chat            @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chatId        String
+  MessageStatus MessageStatus[]
+}
+
+model MessageStatus {
+  id        String            @id @default(uuid())
+  messageId String
   userId    String
-  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  roomId    String
+  status    MessageStatusType
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt()
+  message   Message           @relation(fields: [messageId], references: [id])
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model KeyPair {
+  id         String @id @default(cuid())
+  publicKey  String
+  privateKey String
+  chat       Chat   @relation(fields: [chatId], references: [id])
+  chatId     String @unique
 }
 
 model FriendRequest {
@@ -97,4 +120,9 @@ enum StatusType {
 enum RoomType {
   PUBLIC
   PRIVATE
+}
+
+enum MessageStatusType {
+  READ
+  UNREAD
 }

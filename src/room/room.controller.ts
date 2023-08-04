@@ -14,11 +14,13 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { JwtService } from 'src/jwt/jwt.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { Response } from 'src/interface/response';
+import { EncryptService } from 'src/encryption/encrypt.service';
 @Controller('room')
 export class RoomController {
   constructor(
     private readonly roomService: RoomService,
     private readonly jwtService: JwtService,
+    private readonly encryptService: EncryptService,
   ) {}
 
   @Post('/create')

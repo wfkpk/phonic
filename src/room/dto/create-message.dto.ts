@@ -5,5 +5,5 @@ export class CreateMessageDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  message: string;
+  text: string;
 }
