@@ -89,6 +89,7 @@ export class FriendController {
     };
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post(':friendId')
   async sendFriendRequest(
     @Headers('authorization') token: string,
