@@ -10,13 +10,14 @@ import {
   HttpException,
   HttpStatus,
   Headers,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { User } from '@prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from 'src/guard/auth.guard';
 import { Auth } from 'src/auth/auth.decorator';
+import { Response } from 'src/interface/response';
 
 @Controller('/u')
 export class UserController {
@@ -26,12 +27,18 @@ export class UserController {
   ) {}
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDto): Promise<any> {
-    const user = await this.userService.findOne(createUserDto.email);
-    if (user) {
-      throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
+  async create(@Body() createUserDto: CreateUserDto): Promise<Response> {
+    const user = await this.userService.createUser(createUserDto);
+    if (!user) {
+      throw new HttpException(
+        'User with this email already exists',
+        HttpStatus.BAD_REQUEST,
+      );
     }
-    return this.userService.createUser(createUserDto);
+    return {
+      data: user,
+      status: 'success',
+    };
   }
 
   @Get()
@@ -39,21 +46,27 @@ export class UserController {
   @Auth()
   async getProfile(
     @Headers('authorization') authorization: string,
-  ): Promise<User> {
+  ): Promise<Response> {
     const token = authorization.split(' ')[1];
     const userId = this.jwtService.extractUserId(token);
-    return this.userService.findOneById(userId);
+    return {
+      data: await this.userService.findOneById(userId),
+      status: 'success',
+    };
   }
 
-  @Get('/all')
-  async findAll(): Promise<User[]> {
-    return this.userService.findAll();
-  }
+  // @Get('/all')
+  // async findAll(): Promise<User[]> {
+  //   return await this.userService.findAll();
+  // }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(@Param('id') id: string): Promise<User | null> {
-    return this.userService.findOneById(id);
+  async findOne(@Param('id') id: string): Promise<Response> {
+    return {
+      data: await this.userService.findOneById(id),
+      status: 'success',
+    };
   }
 
   @Patch(':id')
@@ -61,7 +74,30 @@ export class UserController {
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
-  ): Promise<User | null> {
-    return this.userService.updateOneById(id, updateUserDto);
+  ): Promise<Response> {
+    return {
+      data: await this.userService.updateOneById(id, updateUserDto),
+      status: 'success',
+    };
+  }
+
+  @Get('/username')
+  async isUsernameAvailable(
+    @Query('username') username: string,
+  ): Promise<Response> {
+    return {
+      data: await this.userService.isUsernameAvailable(username),
+      status: 'success',
+    };
+  }
+
+  @Get('query/username')
+  async findOneByUsername(
+    @Query('username') username: string,
+  ): Promise<Response> {
+    return {
+      data: await this.userService.searchUserByUsername(username),
+      status: 'success',
+    };
   }
 }

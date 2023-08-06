@@ -9,13 +9,14 @@ import {
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { Response } from 'src/interface/response';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('/login')
-  async login(@Body() authDto: AuthDto): Promise<any> {
+  async login(@Body() authDto: AuthDto): Promise<Response> {
     if (!authDto)
       throw new HttpException('Body is missing', HttpStatus.BAD_REQUEST);
     if (!authDto.email || !authDto.password)
@@ -24,11 +25,17 @@ export class AuthController {
         HttpStatus.BAD_REQUEST,
       );
 
-    return await this.authService.sign(authDto);
+    return {
+      data: await this.authService.sign(authDto),
+      status: 'success',
+    };
   }
 
   @Post('/refresh-token')
-  async refreshToken(@Body() body: RefreshTokenDto): Promise<any> {
-    return await this.authService.refreshToken(body.refreshToken);
+  async refreshToken(@Body() body: RefreshTokenDto): Promise<Response> {
+    return {
+      data: await this.authService.refreshToken(body.refreshToken),
+      status: 'success',
+    };
   }
 }

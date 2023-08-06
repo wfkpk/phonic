@@ -28,17 +28,25 @@ export class RoomController {
   async getRooms(
     @Headers('Authorization') token: string,
     @Body() createRoomDto: CreateRoomDto,
-  ) {
+  ): Promise<Response> {
     const userId = await this.jwtService.extractUserId(token.split(' ')[1]);
-    return await this.roomService.createRoom(createRoomDto, userId);
+    return {
+      data: await this.roomService.createRoom(createRoomDto, userId),
+      status: 'success',
+    };
   }
 
   @Get('/all')
   @UseGuards(JwtAuthGuard)
-  async getAllRooms(@Headers('Authorization') token: string) {
+  async getAllRooms(
+    @Headers('Authorization') token: string,
+  ): Promise<Response> {
     const userId = await this.jwtService.extractUserId(token.split(' ')[1]);
     console.log(userId);
-    return await this.roomService.getAllRooms(userId);
+    return {
+      data: await this.roomService.getAllRooms(userId),
+      status: 'success',
+    };
   }
 
   @Post('/:id/new-message')
@@ -47,13 +55,16 @@ export class RoomController {
     @Headers('Authorization') token: string,
     @Param('id') roomId: string,
     @Body() createMessageDto: CreateMessageDto,
-  ) {
+  ): Promise<Response> {
     const userId = await this.jwtService.extractUserId(token.split(' ')[1]);
-    return await this.roomService.createMessage(
-      userId,
-      roomId,
-      createMessageDto,
-    );
+    return {
+      data: await this.roomService.createMessage(
+        userId,
+        roomId,
+        createMessageDto,
+      ),
+      status: 'success',
+    };
   }
 
   @Get('/:id')
@@ -61,9 +72,12 @@ export class RoomController {
   async getRoom(
     @Param('id') roomId: string,
     @Headers('Authorization') token: string,
-  ) {
+  ): Promise<Response> {
     const userId = await this.jwtService.extractUserId(token.split(' ')[1]);
-    return await this.roomService.getRoom(roomId, userId);
+    return {
+      data: await this.roomService.getRoom(roomId, userId),
+      status: 'success',
+    };
   }
 
   // @Delete(':id/message/:messageId')
@@ -114,11 +128,24 @@ export class RoomController {
   async inviteUser(
     @Param('id') roomId: string,
     @Headers('Authorization') token: string,
-    @Body() body: { userId: string },
+    @Body() body: { username: string },
   ): Promise<Response> {
     const userId = await this.jwtService.extractUserId(token.split(' ')[1]);
     return {
-      data: await this.roomService.inviteUser(userId, roomId, body.userId),
+      data: await this.roomService.inviteUser(userId, roomId, body.username),
+      status: 'success',
+    };
+  }
+
+  @Delete('/:id/leave')
+  @UseGuards(JwtAuthGuard)
+  async leaveRoom(
+    @Param('id') roomId: string,
+    @Headers('Authorization') token: string,
+  ): Promise<Response> {
+    const userId = await this.jwtService.extractUserId(token.split(' ')[1]);
+    return {
+      data: await this.roomService.leaveRoom(userId, roomId),
       status: 'success',
     };
   }

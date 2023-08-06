@@ -8,10 +8,13 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
+  id       String @id @default(cuid())
+  name     String
+  email    String @unique
+  password String
+
+  username  String   @unique
+  avatarUrl String   @default("https://i.imgur.com/6VBx3io.png")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
 
@@ -27,7 +30,7 @@ model User {
 }
 
 model Chat {
-  id    String  @id @default(uuid())
+  id    String  @id @default(cuid())
   name  String
   about String?
 
@@ -42,7 +45,7 @@ model Chat {
 }
 
 model Message {
-  id       String  @id @default(uuid())
+  id       String  @id @default(cuid())
   text     String
   imageUrl String?
 
@@ -55,7 +58,7 @@ model Message {
 }
 
 model MessageStatus {
-  id        String            @id @default(uuid())
+  id        String            @id @default(cuid())
   messageId String
   userId    String
   status    MessageStatusType
@@ -75,7 +78,7 @@ model KeyPair {
 }
 
 model FriendRequest {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   fromId    String
   toId      String
   createdAt DateTime @default(now())
@@ -87,7 +90,7 @@ model FriendRequest {
 }
 
 model Friend {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   aId       String
   bId       String
   createdAt DateTime @default(now())
@@ -99,6 +102,7 @@ model Friend {
 }
 
 model VoiceRoom {
+  id        String   @id @default(cuid())
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()

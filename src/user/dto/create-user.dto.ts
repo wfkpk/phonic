@@ -20,6 +20,12 @@ export class CreateUserDto {
   @Length(8, 20)
   readonly password: string;
 
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @Length(3, 20)
+  readonly username: string;
+
   // @ApiProperty()
   // @IsString()
   // @IsOptional()

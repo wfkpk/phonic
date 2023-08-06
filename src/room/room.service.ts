@@ -12,6 +12,9 @@ export class RoomService {
   ) {}
 
   async getRoom(chatId: string, userId: string) {
+    if (chatId === 'undefined') {
+      throw new Error('Chat id is undefined');
+    }
     const user = await this.prismaService.user.findFirst({
       where: {
         id: userId,
@@ -242,12 +245,13 @@ export class RoomService {
     };
   }
 
-  async inviteUser(modId: string, roomId: string, userId: string) {
+  async inviteUser(modId: string, roomId: string, username: string) {
     const user = await this.prismaService.user.findUnique({
       where: {
-        id: userId,
+        username: username,
       },
       select: {
+        id: true,
         chat: {
           select: {
             id: true,
@@ -279,6 +283,36 @@ export class RoomService {
       data: {
         users: {
           connect: {
+            id: user.id,
+          },
+        },
+      },
+    });
+    return updatedRoom;
+  }
+
+  async leaveRoom(userId: string, roomId: string) {
+    const room = await this.prismaService.chat.findUnique({
+      where: {
+        id: roomId,
+      },
+      select: {
+        createdById: true,
+      },
+    });
+    if (!room) {
+      throw new Error('Room not found');
+    }
+    if (room.createdById === userId) {
+      throw new Error('You are the moderator of this room');
+    }
+    const updatedRoom = await this.prismaService.chat.update({
+      where: {
+        id: roomId,
+      },
+      data: {
+        users: {
+          disconnect: {
             id: userId,
           },
         },

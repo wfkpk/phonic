@@ -1,8 +1,8 @@
 import {
   AccessToken,
   ParticipantInfo,
-  ParticipantPermission,
-  Room,
+  // ParticipantPermission,
+  // Room,
   RoomServiceClient,
 } from 'livekit-server-sdk';
 import { Injectable } from '@nestjs/common';
@@ -127,7 +127,8 @@ export class LivekitService {
       process.env.LIVEKIT_SECRET,
       {
         identity: userId,
-        metadata: user.name,
+        metadata: user.avatarUrl,
+        name: user.name,
       },
     );
     token.addGrant({
@@ -149,13 +150,21 @@ export class LivekitService {
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
+      },
+      select: {
         chat: {
-          some: {
-            id: chatId,
+          select: {
+            id: true,
           },
         },
       },
     });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    if (!user.chat.some((chat) => chat.id === chatId)) {
+      throw new Error('You are not part of this room');
+    }
     const livekitHost = 'http://localhost:7880/';
     const svc = new RoomServiceClient(
       livekitHost,

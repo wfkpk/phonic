@@ -12,21 +12,22 @@ export class UserService {
     private readonly passwordService: EncryptService,
   ) {}
 
-  async findOne(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-  }
+  // async findOne(email: string): Promise<User | null> {
+  //   return this.prisma.user.findUnique({
+  //     where: {
+  //       email,
+  //     },
+  //   });
+  // }
   async createUser(createUserDto: CreateUserDto): Promise<User> {
-    const { email, password, name } = createUserDto;
+    const { email, password, name, username } = createUserDto;
     const hashedPassword = await this.passwordService.hashPassword(password);
     return this.prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
+        username: username.toLowerCase().replace(' ', '_'),
       },
     });
   }
@@ -35,10 +36,17 @@ export class UserService {
     return this.prisma.user.findMany();
   }
 
-  async findOneById(id: string): Promise<User | null> {
+  async findOneById(id: string): Promise<any> {
     return this.prisma.user.findUnique({
       where: {
         id,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatarUrl: true,
+        username: true,
       },
     });
   }
@@ -63,6 +71,34 @@ export class UserService {
     return this.prisma.user.delete({
       where: {
         id,
+      },
+    });
+  }
+
+  async isUsernameAvailable(username: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        username,
+      },
+    });
+    if (user) {
+      return false;
+    }
+
+    return true;
+  }
+
+  async searchUserByUsername(username: string): Promise<any> {
+    return this.prisma.user.findMany({
+      where: {
+        username: {
+          contains: username,
+        },
+      },
+      select: {
+        username: true,
+        name: true,
+        avatarUrl: true,
       },
     });
   }
