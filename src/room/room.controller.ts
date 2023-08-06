@@ -66,20 +66,20 @@ export class RoomController {
     return await this.roomService.getRoom(roomId, userId);
   }
 
-  @Delete(':id/message/:messageId')
-  @UseGuards(JwtAuthGuard)
-  async deleteMessage(
-    @Param('id') roomId: string,
-    @Param('messageId') messageId: string,
-    @Headers('Authorization') token: string,
-  ): Promise<Response> {
-    const userId = await this.jwtService.extractUserId(token.split(' ')[1]);
-    const res = await this.roomService.deleteMessage(roomId, userId, messageId);
-    return {
-      data: res,
-      status: 'success',
-    };
-  }
+  // @Delete(':id/message/:messageId')
+  // @UseGuards(JwtAuthGuard)
+  // async deleteMessage(
+  //   @Param('id') roomId: string,
+  //   @Param('messageId') messageId: string,
+  //   @Headers('Authorization') token: string,
+  // ): Promise<Response> {
+  //   const userId = await this.jwtService.extractUserId(token.split(' ')[1]);
+  //   const res = await this.roomService.deleteMessage(roomId, userId, messageId);
+  //   return {
+  //     data: res,
+  //     status: 'success',
+  //   };
+  // }
 
   @Delete(':id/delete')
   @UseGuards(ModAuthGuard)
@@ -91,6 +91,34 @@ export class RoomController {
     const res = await this.roomService.deleteRoom(userId, roomId);
     return {
       data: res,
+      status: 'success',
+    };
+  }
+
+  @Get('/:id/status')
+  @UseGuards(JwtAuthGuard)
+  async getRoomStatus(
+    @Param('id') roomId: string,
+    @Headers('Authorization') token: string,
+  ): Promise<Response> {
+    const userId = await this.jwtService.extractUserId(token.split(' ')[1]);
+    return {
+      data: (await this.roomService.getRoomStatus(userId, roomId))
+        .onlineUserCount,
+      status: 'success',
+    };
+  }
+
+  @Post('/:id/invite')
+  @UseGuards(JwtAuthGuard, ModAuthGuard)
+  async inviteUser(
+    @Param('id') roomId: string,
+    @Headers('Authorization') token: string,
+    @Body() body: { userId: string },
+  ): Promise<Response> {
+    const userId = await this.jwtService.extractUserId(token.split(' ')[1]);
+    return {
+      data: await this.roomService.inviteUser(userId, roomId, body.userId),
       status: 'success',
     };
   }

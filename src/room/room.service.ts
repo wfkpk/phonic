@@ -12,7 +12,6 @@ export class RoomService {
   ) {}
 
   async getRoom(chatId: string, userId: string) {
-    //check user is part of that room
     const user = await this.prismaService.user.findFirst({
       where: {
         id: userId,
@@ -73,6 +72,7 @@ export class RoomService {
     console.log(room);
     return room;
   }
+
   async createRoom(createRoomDto: CreateRoomDto, userId: string): Promise<any> {
     const { name, about } = createRoomDto;
     const newRoom = await this.prismaService.chat.create({
@@ -117,7 +117,24 @@ export class RoomService {
     //   chatId,
     //   text,
     // );
-
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        chat: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    if (!user.chat.some((chat) => chat.id === chatId)) {
+      throw new Error('You are not part of this room');
+    }
     const newMessage = await this.prismaService.message.create({
       data: {
         text: encryptedMessage,
@@ -168,17 +185,105 @@ export class RoomService {
     };
   }
 
-  async deleteMessage(
-    chatId: string,
-    userId: string,
-    messageId: string,
-  ): Promise<any> {
-    return await this.prismaService.message.delete({
+  // async deleteMessage(
+  //   chatId: string,
+  //   userId: string,
+  //   messageId: string,
+  // ): Promise<any> {
+  //   return await this.prismaService.message.delete({
+  //     where: {
+  //       id: messageId,
+  //       userId: userId,
+  //       chatId: chatId,
+  //     },
+  //   });
+  // }
+
+  async getRoomStatus(userId: string, roomId: string) {
+    const user = await this.prismaService.user.findFirst({
       where: {
-        id: messageId,
-        userId: userId,
-        chatId: chatId,
+        id: userId,
+        chat: {
+          some: {
+            id: roomId,
+          },
+        },
       },
     });
+    if (!user) {
+      throw new Error('You are not part of this room');
+    }
+
+    const onlineUser = await this.prismaService.chat.findMany({
+      where: {
+        id: roomId,
+      },
+      select: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            status: true,
+          },
+        },
+      },
+    });
+    //count online user
+
+    const onlineUserCount = onlineUser[0].users.filter(
+      (user) => user.status === 'ONLINE',
+    ).length;
+    const totalUserCount = onlineUser[0].users.length;
+    return {
+      onlineUserCount,
+      totalUserCount,
+      user: onlineUser[0].users,
+    };
+  }
+
+  async inviteUser(modId: string, roomId: string, userId: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        chat: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    if (user.chat.some((chat) => chat.id === roomId)) {
+      throw new Error('User already in this room');
+    }
+    const room = await this.prismaService.chat.findUnique({
+      where: {
+        id: roomId,
+      },
+    });
+    if (!room) {
+      throw new Error('Room not found');
+    }
+    if (room.createdById !== modId) {
+      throw new Error('You are not the moderator of this room');
+    }
+    const updatedRoom = await this.prismaService.chat.update({
+      where: {
+        id: roomId,
+      },
+      data: {
+        users: {
+          connect: {
+            id: userId,
+          },
+        },
+      },
+    });
+    return updatedRoom;
   }
 }
