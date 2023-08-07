@@ -276,6 +276,20 @@ export class RoomService {
     if (room.createdById !== modId) {
       throw new Error('You are not the moderator of this room');
     }
+    // const friends = await this.prismaService.friend.findFirst({
+    //   where: {
+    //     AND: [
+    //       {
+    //         aId: modId,
+    //         bId: user.id,
+    //       },
+    //       {
+    //         aId: user.id,
+    //         bId: modId,
+    //       },
+    //     ],
+    //   },
+    // });
     const updatedRoom = await this.prismaService.chat.update({
       where: {
         id: roomId,
