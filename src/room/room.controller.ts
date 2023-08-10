@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { RoomService } from './room.service';
 import { JwtAuthGuard, ModAuthGuard } from 'src/guard/auth.guard';
@@ -72,10 +73,11 @@ export class RoomController {
   async getRoom(
     @Param('id') roomId: string,
     @Headers('Authorization') token: string,
+    @Query('cursor') cursor: string,
   ): Promise<Response> {
     const userId = await this.jwtService.extractUserId(token.split(' ')[1]);
     return {
-      data: await this.roomService.getRoom(roomId, userId),
+      data: await this.roomService.getRoom(roomId, userId, cursor),
       status: 'success',
     };
   }

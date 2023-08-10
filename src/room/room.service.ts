@@ -11,7 +11,7 @@ export class RoomService {
     private readonly encryptService: EncryptService,
   ) {}
 
-  async getRoom(chatId: string, userId: string) {
+  async getRoom(chatId: string, userId: string, cursor: string) {
     if (chatId === 'undefined') {
       throw new Error('Chat id is undefined');
     }
@@ -38,6 +38,9 @@ export class RoomService {
         name: true,
         about: true,
         messages: {
+          skip: 1,
+          take: 25,
+          cursor: { id: cursor },
           select: {
             id: true,
             text: true,
@@ -49,6 +52,7 @@ export class RoomService {
               },
             },
           },
+          orderBy: { createdAt: 'asc' },
         },
         users: {
           select: {
